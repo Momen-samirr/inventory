@@ -32,24 +32,28 @@ const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(",").map((url) => url.trim())
   : ["http://localhost:3000"];
 
+// Log allowed origins for debugging (only in production startup)
+if (process.env.NODE_ENV === "production") {
+  console.log("Allowed CORS origins:", allowedOrigins);
+}
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests) only in development
+      // Allow requests with no origin (like mobile apps, curl, or health checks)
       if (!origin) {
-        if (process.env.NODE_ENV === "development") {
-          return callback(null, true);
-        }
-        return callback(new Error("Not allowed by CORS"));
+        return callback(null, true);
       }
       
-      // In production, only allow configured origins
+      // Check if origin is in allowed list
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else if (process.env.NODE_ENV === "development") {
-        // In development, allow localhost
+        // In development, allow all localhost origins
         callback(null, true);
       } else {
+        // In production, log the rejected origin for debugging
+        console.warn(`CORS: Rejected origin: ${origin}. Allowed origins: ${allowedOrigins.join(", ")}`);
         callback(new Error("Not allowed by CORS"));
       }
     },
