@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,12 +26,6 @@ export default function RegisterPage() {
   const { user } = useAppSelector((state) => state.auth);
   const [register, { isLoading }] = useRegisterMutation();
 
-  // Only admins can register new users
-  if (!user || user.role !== "ADMIN") {
-    router.push("/dashboard");
-    return null;
-  }
-
   const {
     register: registerField,
     handleSubmit,
@@ -43,10 +37,36 @@ export default function RegisterPage() {
     },
   });
 
+  // Only admins can register new users - redirect if not admin
+  useEffect(() => {
+    if (!user || user.role !== "ADMIN") {
+      router.push("/dashboard");
+    }
+  }, [user, router]);
+
+  // Don't render form if user is not admin
+  if (!user || user.role !== "ADMIN") {
+    return null;
+  }
+
   const onSubmit = async (data: RegisterFormData) => {
     try {
       const result = await register(data).unwrap();
-      dispatch(setCredentials(result));
+      
+      // Ensure user has a role (required for authSlice)
+      if (!result.user.role) {
+        throw new Error("User role is missing from server response");
+      }
+      
+      // Dispatch credentials to Redux store
+      dispatch(setCredentials({
+        token: result.token,
+        user: {
+          ...result.user,
+          role: result.user.role, // TypeScript now knows role is defined
+        },
+      }));
+      
       toast.success("User registered successfully!");
       router.push("/users");
     } catch (error: any) {

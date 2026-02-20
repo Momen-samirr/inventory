@@ -252,14 +252,15 @@ const Inventory = () => {
         className="bg-white shadow rounded-lg border border-gray-200 mt-5 !text-gray-700"
         paginationMode="server"
         rowCount={pagination?.total || products.length}
-        page={page - 1}
-        pageSize={limit}
-        onPageChange={(newPage) => setPage(newPage + 1)}
-        onPageSizeChange={(newPageSize) => {
-          setLimit(newPageSize);
-          setPage(1);
+        paginationModel={{
+          page: page - 1,
+          pageSize: limit,
         }}
-        rowsPerPageOptions={[10, 20, 50, 100]}
+        onPaginationModelChange={(model) => {
+          setPage(model.page + 1);
+          setLimit(model.pageSize);
+        }}
+        pageSizeOptions={[10, 20, 50, 100]}
       />
     </div>
   );

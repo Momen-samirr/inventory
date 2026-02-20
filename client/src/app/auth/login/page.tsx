@@ -54,8 +54,19 @@ export default function LoginPage() {
         throw new Error("Invalid response format from server");
       }
       
+      // Ensure user has a role (required for authSlice)
+      if (!response.user.role) {
+        throw new Error("User role is missing from server response");
+      }
+      
       // Dispatch credentials to Redux store
-      dispatch(setCredentials(response));
+      dispatch(setCredentials({
+        token: response.token,
+        user: {
+          ...response.user,
+          role: response.user.role, // TypeScript now knows role is defined
+        },
+      }));
       
       toast.success("Login successful!");
       

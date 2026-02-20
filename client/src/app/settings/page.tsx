@@ -288,11 +288,11 @@ const Settings = () => {
                 {currentUser?.isActive ? "Active" : "Inactive"}
               </span>
             </div>
-            {currentUser?.createdAt && (
+            {(currentUser as any)?.createdAt && (
               <div className="flex justify-between">
                 <span className="text-sm font-medium text-gray-700">Member since:</span>
                 <span className="text-sm text-gray-900">
-                  {new Date(currentUser.createdAt).toLocaleDateString()}
+                  {new Date((currentUser as any).createdAt).toLocaleDateString()}
                 </span>
               </div>
             )}

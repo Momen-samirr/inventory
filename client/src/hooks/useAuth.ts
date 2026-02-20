@@ -77,9 +77,16 @@ export function useAuth() {
 
   // Update user data when fetched or when userData changes
   useEffect(() => {
-    if (userData) {
+    if (userData && userData.role) {
       // Always update if userData is available (handles updates after image upload)
-      dispatch(setCredentials({ user: userData, token: localStorageToken || "" }));
+      // Ensure role is defined before setting credentials
+      dispatch(setCredentials({ 
+        user: {
+          ...userData,
+          role: userData.role, // TypeScript now knows role is defined
+        }, 
+        token: localStorageToken || "" 
+      }));
     }
   }, [userData, localStorageToken, dispatch]);
 

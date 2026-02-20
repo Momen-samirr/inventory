@@ -359,14 +359,15 @@ const Users = () => {
           autoHeight
           paginationMode="server"
           rowCount={pagination?.total || users.length}
-          page={page - 1}
-          pageSize={limit}
-          onPageChange={(newPage) => setPage(newPage + 1)}
-          onPageSizeChange={(newPageSize) => {
-            setLimit(newPageSize);
-            setPage(1);
+          paginationModel={{
+            page: page - 1,
+            pageSize: limit,
           }}
-          rowsPerPageOptions={[10, 20, 50, 100]}
+          onPaginationModelChange={(model) => {
+            setPage(model.page + 1);
+            setLimit(model.pageSize);
+          }}
+          pageSizeOptions={[10, 20, 50, 100]}
         />
         <CreateUserModal
           isOpen={isCreateModalOpen}
