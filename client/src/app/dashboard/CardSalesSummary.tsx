@@ -10,10 +10,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const CardSalesSummary = () => {
-  const { data, isLoading, isError } = useGetDashboardMetricsQuery();
-  const salesData = data?.salesSummary || [];
+  const { data: response, isLoading, isError } = useGetDashboardMetricsQuery();
+  const salesData = response?.data?.salesSummary || [];
 
   const [timeframe, setTimeframe] = useState("weekly");
 
@@ -44,7 +45,9 @@ const CardSalesSummary = () => {
   return (
     <div className="row-span-3 xl:row-span-6 bg-white shadow-md rounded-2xl flex flex-col justify-between">
       {isLoading ? (
-        <div className="m-5">Loading...</div>
+        <div className="m-5 flex justify-center items-center h-full">
+          <LoadingSpinner size="md" />
+        </div>
       ) : (
         <>
           {/* HEADER */}

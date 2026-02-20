@@ -4,6 +4,7 @@ import {
 } from "@/state/api";
 import { TrendingUp } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 type ExpenseSums = {
   [category: string]: number;
@@ -12,7 +13,8 @@ type ExpenseSums = {
 const colors = ["#00C49F", "#0088FE", "#FFBB28"];
 
 const CardExpenseSummary = () => {
-  const { data: dashboardMetrics, isLoading } = useGetDashboardMetricsQuery();
+  const { data: response, isLoading } = useGetDashboardMetricsQuery();
+  const dashboardMetrics = response?.data;
 
   const expenseSummary = dashboardMetrics?.expenseSummary[0];
 
@@ -22,7 +24,8 @@ const CardExpenseSummary = () => {
   const expenseSums = expenseByCategorySummary.reduce(
     (acc: ExpenseSums, item: ExpenseByCategorySummary) => {
       const category = item.category + " Expenses";
-      const amount = parseInt(item.amount, 10);
+      // Amount is stored as dollars (string)
+      const amount = parseFloat(item.amount) || 0;
       if (!acc[category]) acc[category] = 0;
       acc[category] += amount;
       return acc;
@@ -46,7 +49,9 @@ const CardExpenseSummary = () => {
   return (
     <div className="row-span-3 bg-white shadow-md rounded-2xl flex flex-col justify-between">
       {isLoading ? (
-        <div className="m-5">Loading...</div>
+        <div className="m-5 flex justify-center items-center h-full">
+          <LoadingSpinner size="md" />
+        </div>
       ) : (
         <>
           {/* HEADER */}

@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: inventory-management-api
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8000
+    healthCheckPath: /health
+    # Add your environment variables in Render dashboard:
+    # - DATABASE_URL (from Neon)
+    # - JWT_SECRET
+    # - JWT_EXPIRES_IN
+    # - CLOUDINARY_CLOUD_NAME
+    # - CLOUDINARY_API_KEY
+    # - CLOUDINARY_API_SECRET
+    # - CLIENT_URL
+

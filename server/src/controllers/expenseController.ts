@@ -1,11 +1,11 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { Response, NextFunction } from "express";
+import { AuthRequest } from "../middleware/auth";
+import { prisma } from "../config/database";
 
 export const getExpensesByCategory = async (
-  req: Request,
-  res: Response
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const expenseByCategorySummaryRaw = await prisma.expenseByCategory.findMany(
@@ -22,8 +22,11 @@ export const getExpensesByCategory = async (
       })
     );
 
-    res.json(expenseByCategorySummary);
+    res.json({
+      success: true,
+      data: expenseByCategorySummary,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error retrieving expenses by category" });
+    next(error);
   }
 };

@@ -3,14 +3,19 @@ import { ShoppingBag } from "lucide-react";
 import React from "react";
 import Rating from "../(components)/Rating";
 import Image from "next/image";
+import { getProductImageUrl } from "@/utils/images";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const CardPopularProducts = () => {
-  const { data: dashboardMetrics, isLoading } = useGetDashboardMetricsQuery();
+  const { data: response, isLoading } = useGetDashboardMetricsQuery();
+  const dashboardMetrics = response?.data;
 
   return (
     <div className="row-span-3 xl:row-span-6 bg-white shadow-md rounded-2xl pb-16">
       {isLoading ? (
-        <div className="m-5">Loading...</div>
+        <div className="m-5 flex justify-center items-center h-full">
+          <LoadingSpinner size="md" />
+        </div>
       ) : (
         <>
           <h3 className="text-lg font-semibold px-7 pt-5 pb-2">
@@ -25,13 +30,11 @@ const CardPopularProducts = () => {
               >
                 <div className="flex items-center gap-3">
                   <Image
-                    src={`https://s3-inventorymanagement.s3.us-east-2.amazonaws.com/product${
-                      Math.floor(Math.random() * 3) + 1
-                    }.png`}
+                    src={product.imageUrl || getProductImageUrl(product.productId)}
                     alt={product.name}
                     width={48}
                     height={48}
-                    className="rounded-lg w-14 h-14"
+                    className="rounded-lg w-14 h-14 object-cover"
                   />
                   <div className="flex flex-col justify-between gap-1">
                     <div className="font-bold text-gray-700">

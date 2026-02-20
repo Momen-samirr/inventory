@@ -13,75 +13,213 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum StockMovementType {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RETURN
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  STOCK_ADJUSTMENT
+}
+
 model Users {
-  userId String @id
-  name   String
-  email  String
+  userId        String           @id @default(uuid())
+  name          String
+  email         String           @unique
+  password      String
+  role          UserRole         @default(EMPLOYEE)
+  isActive      Boolean          @default(true)
+  imageUrl      String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  StockMovements StockMovement[]
+  AuditLogs     AuditLog[]
+  Sales         Sales[]
+  Purchases     Purchases[]
+  Expenses      Expenses[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Categories {
+  categoryId   String    @id @default(uuid())
+  name         String    @unique
+  description  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  products     Products[]
+
+  @@index([name])
 }
 
 model Products {
-  productId     String      @id
-  name          String
-  price         Float
-  rating        Float?
-  stockQuantity Int
-  Sales         Sales[]
-  Purchases     Purchases[]
+  productId      String           @id @default(uuid())
+  name           String
+  description    String?
+  price          Float
+  rating         Float?
+  stockQuantity  Int              @default(0)
+  imageUrl       String?
+  categoryId     String?
+  sku            String?          @unique
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  category       Categories?      @relation(fields: [categoryId], references: [categoryId], onDelete: SetNull)
+  Sales          Sales[]
+  Purchases      Purchases[]
+  StockMovements StockMovement[]
+
+  @@index([name])
+  @@index([categoryId])
+  @@index([stockQuantity])
+  @@index([sku])
 }
 
 model Sales {
-  saleId      String   @id
+  saleId      String   @id @default(uuid())
   productId   String
-  timestamp   DateTime
+  userId      String?
+  timestamp   DateTime @default(now())
   quantity    Int
   unitPrice   Float
   totalAmount Float
-  product     Products @relation(fields: [productId], references: [productId])
+  product     Products @relation(fields: [productId], references: [productId], onDelete: Cascade)
+  user        Users?   @relation(fields: [userId], references: [userId], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([timestamp])
+  @@index([userId])
 }
 
 model Purchases {
-  purchaseId String   @id
+  purchaseId String   @id @default(uuid())
   productId  String
-  timestamp  DateTime
+  userId     String?
+  timestamp  DateTime @default(now())
   quantity   Int
   unitCost   Float
   totalCost  Float
-  product    Products @relation(fields: [productId], references: [productId])
+  product    Products @relation(fields: [productId], references: [productId], onDelete: Cascade)
+  user       Users?   @relation(fields: [userId], references: [userId], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([timestamp])
+  @@index([userId])
 }
 
 model Expenses {
-  expenseId String   @id
-  category  String
-  amount    Float
-  timestamp DateTime
+  expenseId   String   @id @default(uuid())
+  title       String
+  description String?
+  category    String
+  amount      Float
+  userId      String?
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        Users?   @relation(fields: [userId], references: [userId], onDelete: SetNull)
+
+  @@index([category])
+  @@index([timestamp])
+  @@index([userId])
 }
 
 model SalesSummary {
-  salesSummaryId   String   @id
+  salesSummaryId   String   @id @default(uuid())
   totalValue       Float
   changePercentage Float?
-  date             DateTime
+  date             DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([date])
 }
 
 model PurchaseSummary {
-  purchaseSummaryId String   @id
+  purchaseSummaryId String   @id @default(uuid())
   totalPurchased    Float
   changePercentage  Float?
-  date              DateTime
+  date              DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([date])
 }
 
 model ExpenseSummary {
-  expenseSummaryId  String              @id
+  expenseSummaryId  String              @id @default(uuid())
   totalExpenses     Float
-  date              DateTime
+  date              DateTime            @default(now())
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
   ExpenseByCategory ExpenseByCategory[]
+
+  @@index([date])
 }
 
 model ExpenseByCategory {
-  expenseByCategoryId String         @id
+  expenseByCategoryId String         @id @default(uuid())
   expenseSummaryId    String
   category            String
   amount              BigInt
-  date                DateTime
-  expenseSummary      ExpenseSummary @relation(fields: [expenseSummaryId], references: [expenseSummaryId])
+  date                DateTime       @default(now())
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  expenseSummary      ExpenseSummary @relation(fields: [expenseSummaryId], references: [expenseSummaryId], onDelete: Cascade)
+
+  @@index([expenseSummaryId])
+  @@index([category])
+  @@index([date])
+}
+
+model StockMovement {
+  movementId   String            @id @default(uuid())
+  productId    String
+  userId       String
+  movementType StockMovementType
+  quantity     Int
+  previousStock Int
+  newStock     Int
+  reason       String?
+  createdAt    DateTime          @default(now())
+  product      Products          @relation(fields: [productId], references: [productId], onDelete: Cascade)
+  user         Users             @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([userId])
+  @@index([movementType])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  auditLogId String      @id @default(uuid())
+  userId     String?
+  action     AuditAction
+  entityType String
+  entityId   String?
+  details    String?
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+  user       Users?      @relation(fields: [userId], references: [userId], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
 }

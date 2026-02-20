@@ -36,7 +36,7 @@ const Expenses = () => {
     isLoading,
     isError,
   } = useGetExpensesByCategoryQuery();
-  const expenses = useMemo(() => expensesData ?? [], [expensesData]);
+  const expenses = useMemo(() => expensesData?.data ?? [], [expensesData]);
 
   const parseDate = (dateString: string) => {
     const date = new Date(dateString);

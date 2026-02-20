@@ -11,11 +11,18 @@ import {
   Menu,
   SlidersHorizontal,
   User,
+  LogOut,
+  FileText,
+  Tags,
+  TrendingUp,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import React from "react";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { getLogoUrl } from "@/utils/images";
+import { useAuth } from "@/hooks/useAuth";
+import RoleGuard from "@/components/RoleGuard";
 
 interface SidebarLinkProps {
   href: string;
@@ -59,6 +66,45 @@ const SidebarLink = ({
   );
 };
 
+const LogoutButton = ({ isCollapsed }: { isCollapsed: boolean }) => {
+  const { logout } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isLoggingOut) {
+      return;
+    }
+    
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      // Reset after a delay to prevent rapid clicks
+      setTimeout(() => setIsLoggingOut(false), 2000);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleLogout}
+      disabled={isLoggingOut}
+      className={`w-full cursor-pointer flex items-center ${
+        isCollapsed ? "justify-center py-4" : "justify-start px-4 py-4"
+      } hover:text-red-500 hover:bg-red-50 gap-3 transition-colors rounded-md disabled:opacity-50 disabled:cursor-not-allowed`}
+    >
+      <LogOut className="w-6 h-6 text-gray-700" />
+      {!isCollapsed && (
+        <span className="font-medium text-gray-700">
+          {isLoggingOut ? "Logging out..." : "Logout"}
+        </span>
+      )}
+    </button>
+  );
+};
+
 const Sidebar = () => {
   const dispatch = useAppDispatch();
   const isSidebarCollapsed = useAppSelector(
@@ -82,18 +128,18 @@ const Sidebar = () => {
         }`}
       >
         <Image
-          src="https://s3-inventorymanagement.s3.us-east-2.amazonaws.com/logo.png"
-          alt="edstock-logo"
-          width={27}
-          height={27}
-          className="rounded w-8"
+          src={getLogoUrl()}
+          alt="inventory-management-system-logo"
+          width={35}
+          height={35}
+          className="rounded w-16"
         />
         <h1
           className={`${
             isSidebarCollapsed ? "hidden" : "block"
           } font-extrabold text-2xl`}
         >
-          EDSTOCK
+          Inventory
         </h1>
 
         <button
@@ -119,34 +165,63 @@ const Sidebar = () => {
           isCollapsed={isSidebarCollapsed}
         />
         <SidebarLink
+          href="/stock-movements"
+          icon={TrendingUp}
+          label="Stock Movements"
+          isCollapsed={isSidebarCollapsed}
+        />
+        <SidebarLink
           href="/products"
           icon={Clipboard}
           label="Products"
           isCollapsed={isSidebarCollapsed}
         />
-        <SidebarLink
-          href="/users"
-          icon={User}
-          label="Users"
-          isCollapsed={isSidebarCollapsed}
-        />
+        <RoleGuard allowedRoles={["ADMIN", "MANAGER"]}>
+          <SidebarLink
+            href="/categories"
+            icon={Tags}
+            label="Categories"
+            isCollapsed={isSidebarCollapsed}
+          />
+        </RoleGuard>
+        <RoleGuard allowedRoles={["ADMIN", "MANAGER"]}>
+          <SidebarLink
+            href="/expenses"
+            icon={CircleDollarSign}
+            label="Expenses"
+            isCollapsed={isSidebarCollapsed}
+          />
+        </RoleGuard>
+        <RoleGuard allowedRoles={["ADMIN"]}>
+          <SidebarLink
+            href="/users"
+            icon={User}
+            label="Users"
+            isCollapsed={isSidebarCollapsed}
+          />
+          <SidebarLink
+            href="/audit-logs"
+            icon={FileText}
+            label="Audit Logs"
+            isCollapsed={isSidebarCollapsed}
+          />
+        </RoleGuard>
         <SidebarLink
           href="/settings"
           icon={SlidersHorizontal}
           label="Settings"
           isCollapsed={isSidebarCollapsed}
         />
-        <SidebarLink
-          href="/expenses"
-          icon={CircleDollarSign}
-          label="Expenses"
-          isCollapsed={isSidebarCollapsed}
-        />
+      </div>
+
+      {/* LOGOUT */}
+      <div className={`${isSidebarCollapsed ? "px-5" : "px-8"} mb-4`}>
+        <LogoutButton isCollapsed={isSidebarCollapsed} />
       </div>
 
       {/* FOOTER */}
       <div className={`${isSidebarCollapsed ? "hidden" : "block"} mb-10`}>
-        <p className="text-center text-xs text-gray-500">&copy; 2024 Edstock</p>
+        <p className="text-center text-xs text-gray-500">&copy; {new Date().getFullYear()} Inventory Management System</p>
       </div>
     </div>
   );
