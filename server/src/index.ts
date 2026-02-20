@@ -115,12 +115,22 @@ const port = Number(process.env.PORT) || 8000;
 
 // Validate required environment variables in production
 if (process.env.NODE_ENV === "production") {
-  const requiredVars = ["DATABASE_URL", "JWT_SECRET", "CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET", "CLIENT_URL"];
+  const requiredVars = ["DATABASE_URL", "JWT_SECRET", "CLIENT_URL"];
   const missingVars = requiredVars.filter((varName) => !process.env[varName]);
   
   if (missingVars.length > 0) {
     console.error(`Missing required environment variables: ${missingVars.join(", ")}`);
     process.exit(1);
+  }
+  
+  // Warn about optional Cloudinary variables (server will start, but image uploads will fail)
+  const cloudinaryVars = ["CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"];
+  const missingCloudinaryVars = cloudinaryVars.filter((varName) => !process.env[varName]);
+  
+  if (missingCloudinaryVars.length > 0) {
+    console.warn(
+      `Warning: Missing Cloudinary environment variables: ${missingCloudinaryVars.join(", ")}. Image uploads will not work.`
+    );
   }
 }
 
