@@ -30,18 +30,27 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 // CORS configuration
 const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(",").map((url) => url.trim())
+  : process.env.NODE_ENV === "production"
+  ? [] // Empty in production if not set - will log warning
   : ["http://localhost:3000"];
 
-// Log allowed origins for debugging (only in production startup)
-if (process.env.NODE_ENV === "production") {
-  console.log("Allowed CORS origins:", allowedOrigins);
-}
+// Log allowed origins for debugging
+console.log("CORS Configuration:");
+console.log("  NODE_ENV:", process.env.NODE_ENV);
+console.log("  CLIENT_URL:", process.env.CLIENT_URL || "NOT SET");
+console.log("  Allowed origins:", allowedOrigins.length > 0 ? allowedOrigins : "NONE (will allow all in production if CLIENT_URL not set)");
 
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps, curl, or health checks)
       if (!origin) {
+        return callback(null, true);
+      }
+      
+      // In production, if CLIENT_URL is not set, allow all origins (with warning)
+      if (process.env.NODE_ENV === "production" && allowedOrigins.length === 0) {
+        console.warn(`CORS WARNING: CLIENT_URL not set in production. Allowing origin: ${origin}`);
         return callback(null, true);
       }
       
@@ -53,7 +62,9 @@ app.use(
         callback(null, true);
       } else {
         // In production, log the rejected origin for debugging
-        console.warn(`CORS: Rejected origin: ${origin}. Allowed origins: ${allowedOrigins.join(", ")}`);
+        console.error(`CORS ERROR: Rejected origin: ${origin}`);
+        console.error(`  Allowed origins: ${allowedOrigins.join(", ") || "NONE"}`);
+        console.error(`  CLIENT_URL env var: ${process.env.CLIENT_URL || "NOT SET"}`);
         callback(new Error("Not allowed by CORS"));
       }
     },
